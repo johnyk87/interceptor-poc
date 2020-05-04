@@ -9,11 +9,11 @@
         public void Intercept(IInvocation invocation)
         {
             var isSynchronous = true;
-            var id = Guid.NewGuid();
+            object state = null;
 
             try
             {
-                this.BeforeInvocation(id, invocation);
+                state = this.BeforeInvocation(invocation);
 
                 invocation.Proceed();
 
@@ -27,26 +27,26 @@
                         {
                             await task;
 
-                            this.AfterInvocation(id, invocation.ReturnValue);
+                            this.AfterInvocation(state);
                         }
                         catch (Exception ex)
                         {
-                            this.OnError(id, ex);
+                            this.OnError(state, ex);
                         }
                         finally
                         {
-                            this.OnExit(id);
+                            this.OnExit(state);
                         }
                     });
                 }
                 else
                 {
-                    this.AfterInvocation(id, invocation.ReturnValue);
+                    this.AfterInvocation(state);
                 }
             }
             catch (Exception ex)
             {
-                this.OnError(id, ex);
+                this.OnError(state, ex);
 
                 throw;
             }
@@ -54,24 +54,25 @@
             {
                 if (isSynchronous)
                 {
-                    this.OnExit(id);
+                    this.OnExit(state);
                 }
             }
         }
 
-        protected virtual void BeforeInvocation(Guid id, IInvocation invocation)
+        protected virtual object BeforeInvocation(IInvocation invocation)
+        {
+            return invocation;
+        }
+
+        protected virtual void AfterInvocation(object state)
         {
         }
 
-        protected virtual void AfterInvocation(Guid id, object returnValue)
+        protected virtual void OnError(object state, Exception exception)
         {
         }
 
-        protected virtual void OnError(Guid id, Exception exception)
-        {
-        }
-
-        protected virtual void OnExit(Guid id)
+        protected virtual void OnExit(object state)
         {
         }
 

@@ -1,7 +1,6 @@
 ﻿namespace InterceptorPOC.Interceptors.Some
 {
     using System;
-    using System.Collections.Generic;
     using System.Linq;
     using System.Reflection;
     using Castle.DynamicProxy;
@@ -9,7 +8,6 @@
 
     public class SomeInterceptor : BaseInterceptor
     {
-        private readonly IDictionary<Guid, string> Names = new Dictionary<Guid, string>();
         private readonly SomeDependency tracker;
         private readonly Guid id;
 
@@ -19,28 +17,28 @@
             this.id = Guid.NewGuid();
         }
 
-        protected override void BeforeInvocation(Guid id, IInvocation invocation)
+        protected override object BeforeInvocation(IInvocation invocation)
         {
             var name = this.GetName(invocation);
 
-            this.Names[id] = name;
-
             this.tracker.Before(name);
+
+            return name;
         }
 
-        protected override void AfterInvocation(Guid id, object returnValue)
+        protected override void AfterInvocation(object state)
         {
-            this.tracker.After(this.Names[id]);
+            this.tracker.After((string)state);
         }
 
-        protected override void OnError(Guid id, Exception exception)
+        protected override void OnError(object state, Exception exception)
         {
-            this.tracker.Catch(this.Names[id], exception);
+            this.tracker.Catch((string)state, exception);
         }
 
-        protected override void OnExit(Guid id)
+        protected override void OnExit(object state)
         {
-            this.tracker.Finally(this.Names[id]);
+            this.tracker.Finally((string)state);
         }
 
         private string GetName(IInvocation invocation)
