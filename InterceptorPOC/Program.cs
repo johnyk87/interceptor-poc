@@ -3,8 +3,8 @@
     using System;
     using System.Threading.Tasks;
     using InterceptorPOC.Dependencies;
-    using InterceptorPOC.Interceptors.Another;
-    using InterceptorPOC.Interceptors.Some;
+    using InterceptorPOC.Interceptors.Async;
+    using InterceptorPOC.Interceptors.Sync;
     using InterceptorPOC.Targets;
     using Microsoft.Extensions.DependencyInjection;
 
@@ -17,8 +17,8 @@
                 var services = new ServiceCollection()
                     .AddTransient<ITestClass, TestClass>()
                     .AddSingleton<SomeDependency>()
-                    .AddSingleton<SomeInterceptor>()
-                    .AddTransient<AnotherInterceptor>()
+                    .AddSingleton<SyncInterceptor>()
+                    .AddTransient<AsyncInterceptor>()
                     .AddAttributeInterception();
 
                 var serviceProvider = services.BuildServiceProvider();

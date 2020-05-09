@@ -1,56 +1,51 @@
-﻿namespace InterceptorPOC.Interceptors.Another
+﻿namespace InterceptorPOC.Interceptors.Sync
 {
     using System;
     using System.Linq;
     using System.Reflection;
-    using System.Threading.Tasks;
     using Castle.DynamicProxy;
     using InterceptorPOC.Dependencies;
 
-    public class AnotherInterceptor : BaseAsyncInterceptor
+    public class SyncInterceptor : BaseInterceptor
     {
         private readonly SomeDependency tracker;
         private readonly Guid id;
 
-        public AnotherInterceptor(SomeDependency tracker)
+        public SyncInterceptor(SomeDependency tracker)
         {
             this.tracker = tracker;
             this.id = Guid.NewGuid();
         }
 
-        protected override Task<object> BeforeInvocationAsync(IInvocation invocation)
+        protected override object BeforeInvocation(IInvocation invocation)
         {
             var name = this.GetName(invocation);
 
             this.tracker.Before(name);
 
-            return Task.FromResult<object>(name);
+            return name;
         }
 
-        protected override Task AfterInvocationAsync(object state)
+        protected override void AfterInvocation(object state)
         {
             this.tracker.After((string)state);
-
-            return Task.CompletedTask;
         }
 
-        protected override Task<bool> OnErrorAsync(object state, Exception exception)
+        protected override bool OnError(object state, Exception exception)
         {
             this.tracker.Catch((string)state, exception);
 
-            return Task.FromResult(false);
+            return false;
         }
 
-        protected override Task OnExitAsync(object state)
+        protected override void OnExit(object state)
         {
             this.tracker.Finally((string)state);
-
-            return Task.CompletedTask;
         }
 
         private string GetName(IInvocation invocation)
         {
-            var trackAttribute = invocation.Method.GetCustomAttributes<AnotherAttribute>().FirstOrDefault();
+            var trackAttribute = invocation.Method.GetCustomAttributes<SyncAttribute>().FirstOrDefault();
             return (trackAttribute?.Name ?? $"{invocation.TargetType.Name}.{invocation.Method.Name}") + " " + this.id;
         }
     }

@@ -1,33 +1,33 @@
 ﻿namespace InterceptorPOC.Targets
 {
-    using InterceptorPOC.Interceptors.Another;
-    using InterceptorPOC.Interceptors.Some;
+    using InterceptorPOC.Interceptors.Async;
+    using InterceptorPOC.Interceptors.Sync;
     using System.Threading.Tasks;
 
     public interface ITestClass
     {
-        [Some("DoSomething some")]
-        [Another("DoSomething another")]
+        [Sync("DoSomething sync")]
+        [Async("DoSomething async")]
         void DoSomething(int input);
 
-        [Some("GetSomething some")]
-        [Another("GetSomething another")]
+        [Sync("GetSomething sync")]
+        [Async("GetSomething async")]
         int GetSomething(int input);
 
-        [Another("EchoSomething another")]
-        [Some("EchoSomething some")]
+        [Async("EchoSomething async")]
+        [Sync("EchoSomething sync")]
         T EchoSomething<T>(T input);
 
-        [Some("DoSomethingAsync some")]
-        [Another("DoSomethingAsync another")]
+        [Sync("DoSomethingAsync sync")]
+        [Async("DoSomethingAsync async")]
         Task DoSomethingAsync(int input);
 
-        [Some("GetSomethingAsync some")]
-        [Another("GetSomethingAsync another")]
+        [Sync("GetSomethingAsync sync")]
+        [Async("GetSomethingAsync async")]
         Task<int> GetSomethingAsync(int input);
 
-        [Another("EchoSomethingAsync another")]
-        [Some("EchoSomethingAsync some")]
+        [Async("EchoSomethingAsync async")]
+        [Sync("EchoSomethingAsync sync")]
         Task<T> EchoSomethingAsync<T>(T input);
     }
 }

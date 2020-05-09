@@ -1,12 +1,12 @@
-﻿namespace InterceptorPOC.Interceptors.Another
+﻿namespace InterceptorPOC.Interceptors.Async
 {
     using System;
 
     [AttributeUsage(AttributeTargets.Method, Inherited = false, AllowMultiple = false)]
-    public class AnotherAttribute : InterceptorAttribute
+    public class AsyncAttribute : InterceptorAttribute
     {
-        public AnotherAttribute(string name)
-            : base(typeof(AnotherInterceptor))
+        public AsyncAttribute(string name)
+            : base(typeof(AsyncInterceptor))
         {
             this.Name = name;
         }

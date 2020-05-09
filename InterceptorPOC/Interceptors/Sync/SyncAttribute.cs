@@ -1,12 +1,12 @@
-﻿namespace InterceptorPOC.Interceptors.Some
+﻿namespace InterceptorPOC.Interceptors.Sync
 {
     using System;
 
     [AttributeUsage(AttributeTargets.Method, Inherited = false, AllowMultiple = false)]
-    public class SomeAttribute : InterceptorAttribute
+    public class SyncAttribute : InterceptorAttribute
     {
-        public SomeAttribute(string name)
-            : base(typeof(SomeInterceptor))
+        public SyncAttribute(string name)
+            : base(typeof(SyncInterceptor))
         {
             this.Name = name;
         }
