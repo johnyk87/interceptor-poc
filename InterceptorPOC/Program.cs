@@ -2,43 +2,44 @@
 {
     using System;
     using System.Threading.Tasks;
-    using InterceptorPOC.Calculator;
     using InterceptorPOC.Dependencies;
     using InterceptorPOC.Interceptors.Another;
     using InterceptorPOC.Interceptors.Some;
+    using InterceptorPOC.Targets;
     using Microsoft.Extensions.DependencyInjection;
 
-    public class Program
+    public static class Program
     {
-        public static async Task Main(string[] args)
+        public static async Task Main()
         {
             try
             {
                 var services = new ServiceCollection()
-                    .AddTransient<ICalculator, Calculator.Calculator>()
+                    .AddTransient<ITestClass, TestClass>()
                     .AddSingleton<SomeDependency>()
                     .AddSingleton<SomeInterceptor>()
                     .AddTransient<AnotherInterceptor>()
-                    .AddAttributeInterceptors();
+                    .AddAttributeInterception();
 
                 var serviceProvider = services.BuildServiceProvider();
 
-                var calculator = serviceProvider.GetRequiredService<ICalculator>();
+                var testClass = serviceProvider.GetRequiredService<ITestClass>();
 
-                Console.WriteLine($"Increment1 = {calculator.Increment(1)}");
-                Console.WriteLine($"Decrement1 = {calculator.Decrement(1)}");
+                testClass.DoSomething(1);
+                Console.WriteLine("DoSomething1");
 
-                calculator = serviceProvider.GetRequiredService<ICalculator>();
+                Console.WriteLine($"GetSomething2 = {testClass.GetSomething(2)}");
 
-                Console.WriteLine($"Increment2 = {calculator.Increment(2)}");
-                Console.WriteLine($"Decrement2 = {calculator.Decrement(2)}");
+                Console.WriteLine($"EchoSomething3 = {testClass.EchoSomething(3)}");
 
-                Console.WriteLine($"Sum1&2 = {await calculator.DelayedSumAsync(1, 2)}");
+                testClass = serviceProvider.GetRequiredService<ITestClass>();
 
-                await calculator.DoSomethingAsync(1, 2);
-                Console.WriteLine("Something1&2");
+                await testClass.DoSomethingAsync(1);
+                Console.WriteLine("DoSomethingAsync1");
 
-                Console.WriteLine($"Echo1 = {await calculator.EchoSomethingAsync(1)}");
+                Console.WriteLine($"GetSomethingAsync2 = {await testClass.GetSomethingAsync(2)}");
+
+                Console.WriteLine($"EchoSomethingAsync3 = {await testClass.EchoSomethingAsync(3)}");
             }
             catch (Exception ex)
             {

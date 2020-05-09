@@ -17,7 +17,7 @@
                 Selector = new AttributeInterceptorSelector(),
             };
 
-        public static IServiceCollection AddAttributeInterceptors(this IServiceCollection services)
+        public static IServiceCollection AddAttributeInterception(this IServiceCollection services)
         {
             if (services == null)
             {
@@ -32,7 +32,7 @@
                     .ServiceType
                     .GetInterceptorTypes()
                     .Distinct()
-                    .Where(interceptorType => services.IsRegistered(interceptorType))
+                    .Where(services.IsRegistered)
                     .ToArray();
 
                 if (interceptorTypes.Length > 0)
@@ -43,7 +43,7 @@
 
             interceptions
                 .ForEach(interception =>
-                    services.AddInterceptors(interception.ServiceDescriptor, interception.InterceptorTypes));
+                    services.ReplaceWithProxy(interception.ServiceDescriptor, interception.InterceptorTypes));
 
             return services;
         }
@@ -64,8 +64,7 @@
         {
             return member
                 .GetCustomAttributes()
-                .Where(attribute => attribute is InterceptorAttribute)
-                .Select(attribute => attribute as InterceptorAttribute);
+                .OfType<InterceptorAttribute>();
         }
 
         private static bool IsRegistered(this IServiceCollection services, Type serviceType)
@@ -73,7 +72,7 @@
             return services.Any(serviceDescriptor => serviceDescriptor.ServiceType == serviceType);
         }
 
-        private static IServiceCollection AddInterceptors(
+        private static void ReplaceWithProxy(
             this IServiceCollection services,
             ServiceDescriptor serviceDescriptor,
             params Type[] interceptorTypes)
@@ -90,16 +89,14 @@
 
             services.Remove(serviceDescriptor);
 
-            object proxyFactory(IServiceProvider serviceProvider) =>
+            object ProxyFactory(IServiceProvider serviceProvider) =>
                 CreateProxyWithTarget(
                     serviceDescriptor.ServiceType,
                     serviceDescriptor.GetImplementationInstance(serviceProvider),
                     AttributeProxyGenerationOptions,
-                    interceptorTypes.ResolveInstances<IInterceptor>(serviceProvider));
+                    serviceProvider.GetRequiredServices<IInterceptor>(interceptorTypes).ToArray());
 
-            services.Add(new ServiceDescriptor(serviceDescriptor.ServiceType, proxyFactory, serviceDescriptor.Lifetime));
-
-            return services;
+            services.Add(new ServiceDescriptor(serviceDescriptor.ServiceType, ProxyFactory, serviceDescriptor.Lifetime));
         }
 
         private static object CreateProxyWithTarget(
@@ -144,25 +141,25 @@
             {
                 return serviceDescriptor.ImplementationInstance;
             }
-            else if (serviceDescriptor.ImplementationFactory != null)
+
+            if (serviceDescriptor.ImplementationFactory != null)
             {
                 return serviceDescriptor.ImplementationFactory(serviceProvider);
             }
-            else if (serviceDescriptor.ImplementationType != null)
+
+            if (serviceDescriptor.ImplementationType != null)
             {
                 return ActivatorUtilities.CreateInstance(serviceProvider, serviceDescriptor.ImplementationType);
             }
-            else
-            {
-                throw new NotImplementedException("Unknown service descriptor type.");
-            }
+
+            throw new NotSupportedException("Unknown service descriptor type.");
         }
 
-        private static T[] ResolveInstances<T>(this Type[] types, IServiceProvider serviceProvider)
+        private static IEnumerable<T> GetRequiredServices<T>(
+            this IServiceProvider serviceProvider,
+            IEnumerable<Type> types)
         {
-            return types
-                .Select(type => (T)serviceProvider.GetRequiredService(type))
-                .ToArray();
+            return types.Select(type => (T)serviceProvider.GetRequiredService(type));
         }
     }
 }
