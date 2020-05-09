@@ -14,10 +14,10 @@
             .GetMethod(nameof(InterceptWithResult), BindingFlags.Instance | BindingFlags.NonPublic);
 
         private static readonly MethodInfo VoidTaskHandler = typeof(BaseInterceptor)
-            .GetMethod(nameof(InterceptVoidAsync), BindingFlags.Instance | BindingFlags.NonPublic);
+            .GetMethod(nameof(InterceptVoidTaskAsync), BindingFlags.Instance | BindingFlags.NonPublic);
 
         private static readonly MethodInfo ResultTaskHandler = typeof(BaseInterceptor)
-            .GetMethod(nameof(InterceptWithResultAsync), BindingFlags.Instance | BindingFlags.NonPublic);
+            .GetMethod(nameof(InterceptTaskWithResultAsync), BindingFlags.Instance | BindingFlags.NonPublic);
 
         public void Intercept(IInvocation invocation)
         {
@@ -26,22 +26,44 @@
 
         protected virtual object BeforeInvocation(IInvocation invocation)
         {
-            return invocation;
+            return default;
         }
 
         protected virtual void AfterInvocation(object state)
         {
         }
 
-        protected virtual bool OnError(object state, Exception exception, out object newResult)
+        protected virtual bool OnError(object state, Exception exception)
         {
-            newResult = null;
-
             return false;
         }
 
         protected virtual void OnExit(object state)
         {
+        }
+
+        protected virtual object BeforeInvocation<TResult>(IInvocation invocation)
+        {
+            return this.BeforeInvocation(invocation);
+        }
+
+        protected virtual TResult AfterInvocation<TResult>(object state, TResult result)
+        {
+            this.AfterInvocation(state);
+
+            return result;
+        }
+
+        protected virtual (bool, TResult) OnError<TResult>(object state, Exception exception)
+        {
+            var isHandled = this.OnError(state, exception);
+
+            return (isHandled, default);
+        }
+
+        protected virtual void OnExit<TResult>(object state)
+        {
+            this.OnExit(state);
         }
 
         private static bool IsTask(Type returnType)
@@ -83,7 +105,9 @@
             }
             catch (Exception ex)
             {
-                if (!this.OnError(state, ex, out _))
+                var isHandled = this.OnError(state, ex);
+
+                if (!isHandled)
                 {
                     throw;
                 }
@@ -100,32 +124,32 @@
 
             try
             {
-                state = this.BeforeInvocation(invocation);
+                state = this.BeforeInvocation<T>(invocation);
 
                 invocation.Proceed();
 
                 var result = (T)invocation.ReturnValue;
 
-                this.AfterInvocation(state);
-
-                return result;
+                return this.AfterInvocation(state, result);
             }
             catch (Exception ex)
             {
-                if (!this.OnError(state, ex, out var newResult))
+                var (isHandled, result) = this.OnError<T>(state, ex);
+
+                if (!isHandled)
                 {
                     throw;
                 }
 
-                return (T)newResult;
+                return result;
             }
             finally
             {
-                this.OnExit(state);
+                this.OnExit<T>(state);
             }
         }
 
-        private async Task InterceptVoidAsync(IInvocation invocation)
+        private async Task InterceptVoidTaskAsync(IInvocation invocation)
         {
             object state = null;
 
@@ -141,7 +165,9 @@
             }
             catch (Exception ex)
             {
-                if (!this.OnError(state, ex, out _))
+                var isHandled = this.OnError(state, ex);
+
+                if (!isHandled)
                 {
                     throw;
                 }
@@ -152,34 +178,34 @@
             }
         }
 
-        private async Task<T> InterceptWithResultAsync<T>(IInvocation invocation)
+        private async Task<T> InterceptTaskWithResultAsync<T>(IInvocation invocation)
         {
             object state = null;
 
             try
             {
-                state = this.BeforeInvocation(invocation);
+                state = this.BeforeInvocation<T>(invocation);
 
                 invocation.Proceed();
 
                 var result = await (Task<T>)invocation.ReturnValue;
 
-                this.AfterInvocation(state);
-
-                return result;
+                return this.AfterInvocation(state, result);
             }
             catch (Exception ex)
             {
-                if (!this.OnError(state, ex, out var newResult))
+                var (isHandled, result) = this.OnError<T>(state, ex);
+
+                if (!isHandled)
                 {
                     throw;
                 }
 
-                return (T)newResult;
+                return result;
             }
             finally
             {
-                this.OnExit(state);
+                this.OnExit<T>(state);
             }
         }
     }

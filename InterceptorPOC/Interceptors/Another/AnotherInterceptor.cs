@@ -31,10 +31,8 @@
             this.tracker.After((string)state);
         }
 
-        protected override bool OnError(object state, Exception exception, out object newResult)
+        protected override bool OnError(object state, Exception exception)
         {
-            newResult = null;
-
             this.tracker.Catch((string)state, exception);
 
             return false;
