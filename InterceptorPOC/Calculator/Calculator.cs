@@ -27,5 +27,25 @@
 
             return leftParcel + rightParcel;
         }
+
+        public async Task DoSomethingAsync(int leftParcel, int rightParcel)
+        {
+            Console.WriteLine($"Entered {nameof(Calculator)}.{nameof(this.DoSomethingAsync)} with inputs {leftParcel} and {rightParcel}...");
+
+            await Task.Delay(1000);
+
+            Console.WriteLine($"Now leaving {nameof(Calculator)}.{nameof(this.DoSomethingAsync)}...");
+        }
+
+        public async Task<T> EchoSomethingAsync<T>(T returnValue)
+        {
+            Console.WriteLine($"Entered {nameof(Calculator)}.{nameof(this.EchoSomethingAsync)} with input {returnValue}...");
+
+            await Task.Delay(1000);
+
+            Console.WriteLine($"Now leaving {nameof(Calculator)}.{nameof(this.EchoSomethingAsync)}...");
+
+            return returnValue;
+        }
     }
 }

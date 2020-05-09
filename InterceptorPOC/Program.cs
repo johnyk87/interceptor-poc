@@ -33,11 +33,17 @@
                 Console.WriteLine($"Increment2 = {calculator.Increment(2)}");
                 Console.WriteLine($"Decrement2 = {calculator.Decrement(2)}");
 
-                Console.WriteLine($"Sum2 = {await calculator.DelayedSumAsync(1, 2)}");
+                Console.WriteLine($"Sum1&2 = {await calculator.DelayedSumAsync(1, 2)}");
+
+                await calculator.DoSomethingAsync(1, 2);
+                Console.WriteLine("Something1&2");
+
+                Console.WriteLine($"Echo1 = {await calculator.EchoSomethingAsync(1)}");
             }
             catch (Exception ex)
             {
                 Console.WriteLine($"{ex.GetType().Name}: {ex.Message}");
+                Console.WriteLine($"StackTrace:{Environment.NewLine}{ex.StackTrace}");
             }
 
             Console.WriteLine("Press <ENTER> to terminate...");

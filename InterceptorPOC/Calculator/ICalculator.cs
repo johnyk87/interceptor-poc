@@ -14,8 +14,16 @@
         [Some("ICalculator.Decrementer some")]
         int Decrement(int input);
 
-        [Another("ICalculator.Decrementer another")]
-        [Some("ICalculator.Decrementer some")]
+        [Another("ICalculator.DelayedSumAsync another")]
+        [Some("ICalculator.DelayedSumAsync some")]
         Task<int> DelayedSumAsync(int leftParcel, int rightParcel);
+
+        [Another("ICalculator.DoSomethingAsync another")]
+        [Some("ICalculator.DoSomethingAsync some")]
+        Task DoSomethingAsync(int leftParcel, int rightParcel);
+
+        [Another("ICalculator.EchoSomethingAsync another")]
+        [Some("ICalculator.EchoSomethingAsync some")]
+        Task<T> EchoSomethingAsync<T>(T returnValue);
     }
 }
