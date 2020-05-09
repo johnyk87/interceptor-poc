@@ -7,22 +7,21 @@
 
     public abstract class BaseInterceptor : IInterceptor
     {
-        private static readonly MethodInfo VoidTaskHandler = typeof(BaseInterceptor)
-            .GetMethod(nameof(HandleVoidTaskReturnValue), BindingFlags.Instance | BindingFlags.NonPublic);
+        private static readonly MethodInfo VoidHandler = typeof(BaseInterceptor)
+            .GetMethod(nameof(InterceptVoid), BindingFlags.Instance | BindingFlags.NonPublic);
 
-        private static readonly MethodInfo GenericTaskHandler = typeof(BaseInterceptor)
-            .GetMethod(nameof(HandleGenericTaskReturnValue), BindingFlags.Instance | BindingFlags.NonPublic);
+        private static readonly MethodInfo ResultHandler = typeof(BaseInterceptor)
+            .GetMethod(nameof(InterceptWithResult), BindingFlags.Instance | BindingFlags.NonPublic);
+
+        private static readonly MethodInfo VoidTaskHandler = typeof(BaseInterceptor)
+            .GetMethod(nameof(InterceptVoidAsync), BindingFlags.Instance | BindingFlags.NonPublic);
+
+        private static readonly MethodInfo ResultTaskHandler = typeof(BaseInterceptor)
+            .GetMethod(nameof(InterceptWithResultAsync), BindingFlags.Instance | BindingFlags.NonPublic);
 
         public void Intercept(IInvocation invocation)
         {
-            if (IsAsync(invocation))
-            {
-                this.InterceptAsyncMethod(invocation);
-            }
-            else
-            {
-                this.InterceptSyncMethod(invocation);
-            }
+            invocation.ReturnValue = this.InvokeHandlerMethod(invocation);
         }
 
         protected virtual object BeforeInvocation(IInvocation invocation)
@@ -45,12 +44,32 @@
         {
         }
 
-        private static bool IsAsync(IInvocation invocation)
+        private static bool IsTask(Type returnType)
         {
-            return typeof(Task).IsAssignableFrom(invocation.Method.ReturnType);
+            return typeof(Task).IsAssignableFrom(returnType);
         }
 
-        private void InterceptSyncMethod(IInvocation invocation)
+        private object InvokeHandlerMethod(IInvocation invocation)
+        {
+            MethodInfo handler;
+
+            if (IsTask(invocation.Method.ReturnType))
+            {
+                handler = invocation.Method.ReturnType.GenericTypeArguments.Length > 0
+                    ? ResultTaskHandler.MakeGenericMethod(invocation.Method.ReturnType.GenericTypeArguments)
+                    : VoidTaskHandler;
+            }
+            else
+            {
+                handler = invocation.Method.ReturnType != typeof(void)
+                    ? ResultHandler.MakeGenericMethod(invocation.Method.ReturnType)
+                    : VoidHandler;
+            }
+
+            return handler.Invoke(this, new object[] { invocation});
+        }
+
+        private void InterceptVoid(IInvocation invocation)
         {
             object state = null;
 
@@ -59,74 +78,6 @@
                 state = this.BeforeInvocation(invocation);
 
                 invocation.Proceed();
-
-                this.AfterInvocation(state);
-            }
-            catch (Exception ex)
-            {
-                if (!this.OnError(state, ex, out var newResult))
-                {
-                    throw;
-                }
-
-                invocation.ReturnValue = newResult;
-            }
-            finally
-            {
-                this.OnExit(state);
-            }
-        }
-
-        private void InterceptAsyncMethod(IInvocation invocation)
-        {
-            var isSynchronous = true;
-            object state = null;
-
-            try
-            {
-                state = this.BeforeInvocation(invocation);
-
-                invocation.Proceed();
-
-                invocation.ReturnValue = this.InvokeTaskHandlerMethod(
-                    invocation.Method.ReturnType,
-                    invocation.ReturnValue,
-                    state);
-
-                isSynchronous = false;
-            }
-            catch (Exception ex)
-            {
-                if (!this.OnError(state, ex, out var newResult))
-                {
-                    throw;
-                }
-
-                invocation.ReturnValue = newResult;
-            }
-            finally
-            {
-                if (isSynchronous)
-                {
-                    this.OnExit(state);
-                }
-            }
-        }
-
-        private object InvokeTaskHandlerMethod(Type taskType, object task, object state)
-        {
-            var handler = taskType.GenericTypeArguments.Length > 0
-                ? GenericTaskHandler.MakeGenericMethod(taskType.GenericTypeArguments)
-                : VoidTaskHandler;
-
-            return handler.Invoke(this, new [] { task, state});
-        }
-
-        private async Task HandleVoidTaskReturnValue(Task task, object state)
-        {
-            try
-            {
-                await task;
 
                 this.AfterInvocation(state);
             }
@@ -143,11 +94,75 @@
             }
         }
 
-        private async Task<T> HandleGenericTaskReturnValue<T>(Task<T> task, object state)
+        private T InterceptWithResult<T>(IInvocation invocation)
         {
+            object state = null;
+
             try
             {
-                var result = await task;
+                state = this.BeforeInvocation(invocation);
+
+                invocation.Proceed();
+
+                var result = (T)invocation.ReturnValue;
+
+                this.AfterInvocation(state);
+
+                return result;
+            }
+            catch (Exception ex)
+            {
+                if (!this.OnError(state, ex, out var newResult))
+                {
+                    throw;
+                }
+
+                return (T)newResult;
+            }
+            finally
+            {
+                this.OnExit(state);
+            }
+        }
+
+        private async Task InterceptVoidAsync(IInvocation invocation)
+        {
+            object state = null;
+
+            try
+            {
+                state = this.BeforeInvocation(invocation);
+
+                invocation.Proceed();
+
+                await (Task)invocation.ReturnValue;
+
+                this.AfterInvocation(state);
+            }
+            catch (Exception ex)
+            {
+                if (!this.OnError(state, ex, out _))
+                {
+                    throw;
+                }
+            }
+            finally
+            {
+                this.OnExit(state);
+            }
+        }
+
+        private async Task<T> InterceptWithResultAsync<T>(IInvocation invocation)
+        {
+            object state = null;
+
+            try
+            {
+                state = this.BeforeInvocation(invocation);
+
+                invocation.Proceed();
+
+                var result = await (Task<T>)invocation.ReturnValue;
 
                 this.AfterInvocation(state);
 
