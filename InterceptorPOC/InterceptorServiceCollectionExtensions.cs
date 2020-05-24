@@ -48,23 +48,23 @@
             return services;
         }
 
-        private static IEnumerable<Type> GetInterceptorTypes(
-            this Type serviceType)
-        {
-            return serviceType
-                .GetMembers()
-                .SelectMany(member =>
-                    member
-                        .GetInterceptorAttributes()
-                        .Select(interceptorAttribute => interceptorAttribute.InterceptorType));
-        }
-
         internal static IEnumerable<InterceptorAttribute> GetInterceptorAttributes(
             this MemberInfo member)
         {
             return member
                 .GetCustomAttributes()
                 .OfType<InterceptorAttribute>();
+        }
+
+        private static IEnumerable<Type> GetInterceptorTypes(
+            this Type serviceType)
+        {
+            return serviceType
+                .GetMembers(BindingFlags.Instance | BindingFlags.Public)
+                .SelectMany(member =>
+                    member
+                        .GetInterceptorAttributes()
+                        .Select(interceptorAttribute => interceptorAttribute.InterceptorType));
         }
 
         private static bool IsRegistered(this IServiceCollection services, Type serviceType)

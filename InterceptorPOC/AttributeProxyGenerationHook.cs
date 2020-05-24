@@ -13,22 +13,35 @@
 
         public void NonProxyableMemberNotification(Type type, MemberInfo memberInfo)
         {
-            if (ShouldInterceptMember(type, memberInfo))
+            if (!(memberInfo is MethodInfo methodInfo))
             {
-                throw new InvalidOperationException($"Can't intercept member {type.Name}.{memberInfo.Name}."
-                    + " Please make sure the attribute is attached to an interface member or a virtual/overridable class member.");
+                return;
+            }
+
+            if (methodInfo.IsPublic)
+            {
+                throw new InvalidOperationException(
+                    $"Can't intercept member {type.FullName}.{memberInfo.Name}."
+                    + " Please make sure all public members are virtual/overridable.");
+            }
+
+            if (IsInterceptable(methodInfo))
+            {
+                throw new InvalidOperationException(
+                    $"Can't intercept member {type.FullName}.{memberInfo.Name}."
+                    + " Please make sure the member is virtual/overridable.");
             }
         }
 
         public bool ShouldInterceptMethod(Type type, MethodInfo methodInfo)
         {
-            return ShouldInterceptMember(type, methodInfo);
+            return methodInfo.IsPublic
+                || IsInterceptable(methodInfo);
         }
 
-        private bool ShouldInterceptMember(Type type, MemberInfo memberInfo)
+        private static bool IsInterceptable(MethodInfo methodInfo)
         {
-            return memberInfo.MemberType.HasFlag(MemberTypes.Method)
-                && memberInfo.GetInterceptorAttributes().Any();
+            return methodInfo.GetInterceptorAttributes().Any();
         }
     }
 }

@@ -5,6 +5,8 @@ VisualStudioVersion = 15.0.28307.852
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "InterceptorPOC", "InterceptorPOC\InterceptorPOC.csproj", "{6C8ED914-05E9-4BA7-967B-6D0CAB5233EF}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "InterceptorPOC.Tests", "InterceptorPOC.Tests\InterceptorPOC.Tests.csproj", "{C9BAEA59-DB81-43EE-A513-A193BC0B53FF}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -15,6 +17,10 @@ Global
 		{6C8ED914-05E9-4BA7-967B-6D0CAB5233EF}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{6C8ED914-05E9-4BA7-967B-6D0CAB5233EF}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{6C8ED914-05E9-4BA7-967B-6D0CAB5233EF}.Release|Any CPU.Build.0 = Release|Any CPU
+		{C9BAEA59-DB81-43EE-A513-A193BC0B53FF}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{C9BAEA59-DB81-43EE-A513-A193BC0B53FF}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{C9BAEA59-DB81-43EE-A513-A193BC0B53FF}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{C9BAEA59-DB81-43EE-A513-A193BC0B53FF}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
